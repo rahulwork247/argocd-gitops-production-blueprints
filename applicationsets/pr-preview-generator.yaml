@@ -1,0 +1,32 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ephemeral-pr-previews
+  namespace: argocd
+spec:
+  generators:
+    - pullRequest:
+        github:
+          owner: argoproj
+          repo: argocd-example-apps
+          labels:
+            - preview
+        requeueAfterSeconds: 180
+  template:
+    metadata:
+      name: 'preview-pr-{{number}}'
+    spec:
+      project: preview-environments
+      source:
+        repoURL: '{{head_url}}'
+        targetRevision: '{{head_sha}}'
+        path: guestbook
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: 'preview-pr-{{number}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true

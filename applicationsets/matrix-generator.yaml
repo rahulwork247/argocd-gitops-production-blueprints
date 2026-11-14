@@ -1,0 +1,46 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: cluster-workload-matrix
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: argocd-production-blueprints
+spec:
+  generators:
+    - matrix:
+        generators:
+          - git:
+              repoURL: https://github.com/argoproj/argocd-example-apps.git
+              revision: HEAD
+              directories:
+                - path: guestbook*
+          - clusters:
+              selector:
+                matchLabels:
+                  environment: production
+  template:
+    metadata:
+      name: '{{path.basename}}-{{name}}'
+      annotations:
+        notifications.argoproj.io/subscribe.on-deployed.slack: devops-alerts
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/argoproj/argocd-example-apps.git
+        targetRevision: HEAD
+        path: '{{path}}'
+      destination:
+        server: '{{server}}'
+        namespace: '{{path.basename}}'
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+          - CreateNamespace=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m

@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: production-tier
+  namespace: argocd
+spec:
+  description: Production Multi-Tenant Application Environment
+  sourceRepos:
+    - 'https://github.com/argoproj/*'
+  destinations:
+    - namespace: 'prod-*'
+      server: 'https://kubernetes.default.svc'
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: 'apps'
+      kind: Deployment
+    - group: ''
+      kind: Service
+    - group: 'argoproj.io'
+      kind: Rollout
